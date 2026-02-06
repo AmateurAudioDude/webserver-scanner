@@ -19,15 +19,28 @@ const fs = require('fs');
 const crypto = require('crypto'); // Import crypto module
 const { logInfo, logError, logWarn } = require('./../../server/console');
 const apiData = require('./../../server/datahandler');
-const pluginsApi = require('./../../server/plugins_api');
 
-pluginsApi.onPluginEvent('sigArray', (data) => {
-    handleDataPluginsMessage(JSON.stringify({
-        type: 'sigArray',
-        value: data,
-        isScanning: true
-    }), null);
-});
+let pluginsApi;
+
+try {
+    pluginsApi = require('./../../server/plugins_api');
+
+    if (pluginsApi?.onPluginEvent) {
+        pluginsApi.onPluginEvent('sigArray', (data) => {
+            handleDataPluginsMessage(JSON.stringify({
+                type: 'sigArray',
+                value: data,
+                isScanning: true
+            }), null);
+        });
+    }
+} catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND') {
+        logWarn('[Scanner] plugins_api missing, using fallback');
+    } else {
+        throw err; // unexpected error
+    }
+}
 
 // Define the paths to the old and new configuration files
 const oldConfigFilePath = path.join(__dirname, 'configPlugin.json');
@@ -1618,7 +1631,7 @@ async function setupSendSocket() {
 
             // --- pluginsApi (internal only) ---
             const internalMessage = JSON.parse(message);
-            pluginsApi.emitPluginEvent('spectrum-graph', internalMessage, false);
+            if (pluginsApi) pluginsApi.emitPluginEvent('spectrum-graph', internalMessage, false);
 
             // --- DataPluginsSocket (fallback) ---
             if (DataPluginsSocket && DataPluginsSocket.readyState === WebSocket.OPEN) {
