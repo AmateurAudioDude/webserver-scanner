@@ -21,9 +21,14 @@ const { logInfo, logError, logWarn } = require('./../../server/console');
 const apiData = require('./../../server/datahandler');
 
 let pluginsApi;
+let emitPluginEvent = () => {};
 
 try {
     pluginsApi = require('./../../server/plugins_api');
+
+    if (pluginsApi?.emitPluginEvent) {
+        emitPluginEvent = pluginsApi.emitPluginEvent;
+    }
 
     if (pluginsApi?.onPluginEvent) {
         pluginsApi.onPluginEvent('sigArray', (data) => {
@@ -1631,7 +1636,10 @@ async function setupSendSocket() {
 
             // --- pluginsApi (internal only) ---
             const internalMessage = JSON.parse(message);
-            if (pluginsApi) pluginsApi.emitPluginEvent('spectrum-graph', internalMessage, false);
+
+            if (pluginsApi?.emitPluginEvent) {
+                emitPluginEvent('spectrum-graph', internalMessage, false);
+            }
 
             // --- DataPluginsSocket (fallback) ---
             if (DataPluginsSocket && DataPluginsSocket.readyState === WebSocket.OPEN) {
