@@ -1638,7 +1638,7 @@ async function setupSendSocket() {
             const internalMessage = JSON.parse(message);
 
             if (pluginsApi?.emitPluginEvent) {
-                emitPluginEvent('spectrum-graph', internalMessage, false);
+                emitPluginEvent('spectrum-graph', internalMessage, { broadcast: false });
             }
 
             // --- DataPluginsSocket (fallback) ---
